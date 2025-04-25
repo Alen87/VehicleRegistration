@@ -59,13 +59,17 @@ namespace Project.Service
             return await _vehicleMakeRepository.GetPagedAsync(queryOptions);
         }
 
-       
+
         public async Task<IVehicleMake> GetMakeById(int id)
         {
-            return await _vehicleMakeRepository.GetByIdAsync(id);
+            var make = await _vehicleMakeRepository.GetByIdAsync(id);
+            if (make == null)
+                throw new KeyNotFoundException($"Proizvođač vozila s ID-om {id} nije pronađen.");
+
+            return make;
         }
 
-       
+
         public async Task<IVehicleMake> AddMake(IVehicleMake make)
         {
             if (make == null)
