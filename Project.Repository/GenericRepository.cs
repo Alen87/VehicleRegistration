@@ -110,7 +110,7 @@ public abstract class GenericRepository<T, TEntity> : IGenericRepository<T>
 
     public virtual async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate)
     {
-        // Isto kao i kod GetFirstAsync, ovo je pojednostavljeno
+      
         var entities = await _dbSet.ToListAsync();
         var models = entities.Select(MapEntityToModel);
         return models.Any(predicate.Compile());
