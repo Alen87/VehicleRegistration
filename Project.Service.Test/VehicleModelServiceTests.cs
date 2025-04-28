@@ -1,0 +1,168 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
+using FluentAssertions;
+using Moq;
+using Project.Common;
+using Project.Common.Paging;
+using Project.Common.Sorting;
+using Project.Model;
+using Project.Model.Common;
+using Project.Repository.Common;
+using Project.Service;
+using Xunit;
+
+namespace Project.Service.Test
+{
+    public class VehicleModelServiceTests
+    {
+        private readonly Mock<IVehicleModelRepository> _mockRepository;
+        private readonly VehicleModelService _service;
+
+        public VehicleModelServiceTests()
+        {
+            _mockRepository = new Mock<IVehicleModelRepository>();
+            _service = new VehicleModelService(_mockRepository.Object);
+        }
+
+        [Fact]
+        public async Task GetAllModels_ShouldReturnAllModels()
+        {
+           
+            var expectedModels = new List<IVehicleModel>
+            {
+                new VehicleModel { Id = 1, Name = "Model 1", MakeId = 1 },
+                new VehicleModel { Id = 2, Name = "Model 2", MakeId = 1 }
+            };
+            _mockRepository.Setup(x => x.GetAllAsync())
+                .ReturnsAsync(expectedModels);
+
+         
+            var result = await _service.GetAllModels();
+
+          
+            result.Should().BeEquivalentTo(expectedModels);
+        }
+
+        [Fact]
+        public async Task GetPagedModels_ShouldReturnPagedModels()
+        {
+           
+            var queryOptions = new QueryOptions
+            {
+                Paging = new PagingOptions { PageNumber = 1, PageSize = 10 },
+                Sorting = new SortOptions { SortBy = "Name", SortAscending = true }
+            };
+            var expectedResult = new PagedResult<IVehicleModel> (
+                new List<IVehicleModel> { new VehicleModel { Id = 1, Name = "Model 1" } },
+                1, 1, 10);
+            _mockRepository.Setup(x => x.GetPagedAsync(queryOptions))
+                .ReturnsAsync(expectedResult);
+
+            
+            var result = await _service.GetPagedModels(queryOptions);
+
+          
+            result.Should().BeEquivalentTo(expectedResult);
+        }
+
+        [Fact]
+        public async Task GetModelById_WhenModelExists_ShouldReturnModel()
+        {
+           
+            var expectedModel = new VehicleModel { Id = 1, Name = "Model 1" };
+            _mockRepository.Setup(x => x.GetByIdAsync(1))
+                .ReturnsAsync(expectedModel);
+
+           
+            var result = await _service.GetModelById(1);
+
+            
+            result.Should().BeEquivalentTo(expectedModel);
+        }
+
+        [Fact]
+        public async Task GetModelById()
+        {
+            
+            _mockRepository.Setup(x => x.GetByIdAsync(1))
+                .ReturnsAsync((IVehicleModel)null);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.GetModelById(1));
+        }
+
+        [Fact]
+        public async Task AddModel()
+        {
+           
+            var model = new VehicleModel { Name = "New Model", MakeId = 1 };
+            _mockRepository.Setup(x => x.ExistsAsync(It.IsAny<Expression<Func<IVehicleModel, bool>>>()))
+                .ReturnsAsync(false);
+            _mockRepository.Setup(x => x.AddAsync(model))
+                .ReturnsAsync(model);
+
+            
+            var result = await _service.AddModel(model);
+
+           
+            result.Should().BeEquivalentTo(model);
+        }
+
+        [Fact]
+        public async Task AddModel_WithExistingName()
+        {
+           
+            var model = new VehicleModel { Name = "Existing Model", MakeId = 1 };
+            _mockRepository.Setup(x => x.ExistsAsync(It.IsAny<Expression<Func<IVehicleModel, bool>>>()))
+                .ReturnsAsync(true);
+
+            
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.AddModel(model));
+        }
+
+        [Fact]
+        public async Task UpdateModel_WithValidModel()
+        {
+          
+            var model = new VehicleModel { Id = 1, Name = "Updated Model", MakeId = 1 };
+            _mockRepository.Setup(x => x.GetByIdAsync(1))
+                .ReturnsAsync(model);
+            _mockRepository.Setup(x => x.UpdateAsync(model))
+                .ReturnsAsync(model);
+
+           
+            var result = await _service.UpdateModel(model);
+
+            
+            result.Should().BeEquivalentTo(model);
+        }
+
+        [Fact]
+        public async Task DeleteModel_WhenModelExiste()
+        {
+           
+            _mockRepository.Setup(x => x.DeleteAsync(1))
+                .ReturnsAsync(true);
+
+            
+            var result = await _service.DeleteModel(1);
+
+           
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task ModelExistsByName_WhenModelExists()
+        {
+            _mockRepository.Setup(x => x.ExistsAsync(It.IsAny<Expression<Func<IVehicleModel, bool>>>()))
+                .ReturnsAsync(true);
+
+            var result = await _service.ModelExistsByName("Existing Model");
+
+            
+            result.Should().BeTrue();
+        }
+    }
+}
