@@ -185,11 +185,11 @@ namespace Project.Service.Test
         [Fact]
         public async Task GetFirstOwnerAsync_WhenOwnerDoesNotExist_ShouldThrowKeyNotFoundException()
         {
-            // Arrange
+            
             _mockRepository.Setup(x => x.GetFirstAsync(It.IsAny<Expression<Func<IVehicleOwner, bool>>>()))
                 .ReturnsAsync((IVehicleOwner)null);
 
-            // Act & Assert
+            
             await Assert.ThrowsAsync<KeyNotFoundException>(() => 
                 _service.GetFirstOwnerAsync(o => o.FirstName == "NonExistentOwner"));
         }
