@@ -106,7 +106,7 @@ namespace Project.Service
             return await _vehicleMakeRepository.UpdateAsync(make);
         }
 
-        /// <inheritdoc/>
+      
         public async Task<bool> DeleteMake(int id)
         {
             if (id <= 0)
