@@ -1,4 +1,6 @@
-﻿namespace Project.Model.Common;
+﻿using System;
+
+namespace Project.Model.Common;
 
 
 public interface IVehicleOwner : IBaseModel
@@ -6,7 +8,7 @@ public interface IVehicleOwner : IBaseModel
 
     string FirstName { get; set; }
     string LastName { get; set; }
-    DateTime DOB { get; set; }
+    DateTime DateOfBirth { get; set; }
 
 
 }

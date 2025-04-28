@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Project.Common;
 using Project.Common.Paging;
@@ -62,6 +63,16 @@ namespace Project.Service
             return model;
         }
 
+
+        public async Task<IVehicleModel> GetFirstModelAsync(Expression<Func<IVehicleModel, bool>> predicate)
+        {
+            var model = await _vehicleModelRepository.GetFirstAsync(predicate);
+            if (model == null)
+                throw new KeyNotFoundException("Model vozila nije pronađen.");
+
+            return model;
+        }
+
         public async Task<IVehicleModel> AddModel(IVehicleModel model)
         {
             if (model == null)
@@ -116,5 +127,7 @@ namespace Project.Service
 
             return await _vehicleModelRepository.ExistsAsync(m => m.Name.ToLower() == name.ToLower());
         }
+
+       
     }
 } 

@@ -1,4 +1,5 @@
-﻿using Project.Model.Common;
+﻿using System;
+using Project.Model.Common;
 
 namespace Project.Model;
 
@@ -7,10 +8,8 @@ namespace Project.Model;
 /// </summary>
 public class VehicleOwner : IVehicleOwner
 {
-
     public int Id { get; set; }
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public DateTime DOB { get; set; }
-
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+    public DateTime DateOfBirth { get; set; }
 }

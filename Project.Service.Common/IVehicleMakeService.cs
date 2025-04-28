@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Project.Model.Common;
 using Project.Common;
 using Project.Common.Paging;
+using System.Linq.Expressions;
 
 namespace Project.Service.Common
 {
@@ -12,14 +13,10 @@ namespace Project.Service.Common
     {
        
         Task<IEnumerable<IVehicleMake>> GetAllMakes();
-
-      
         Task<PagedResult<IVehicleMake>> GetPagedMakes(QueryOptions queryOptions);
 
-       
         Task<IVehicleMake> GetMakeById(int id);
-
-       
+        Task<IVehicleMake> GetFirstMakeAsync(Expression<Func<IVehicleMake, bool>> predicate);
         Task<IVehicleMake> AddMake(IVehicleMake make);
 
        

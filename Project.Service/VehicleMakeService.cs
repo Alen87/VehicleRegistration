@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Project.Common;
 using Project.Common.Paging;
@@ -69,6 +70,18 @@ namespace Project.Service
             return make;
         }
 
+        public async Task<IVehicleMake> GetFirstMakeAsync(Expression<Func<IVehicleMake, bool>> predicate)
+        {
+            var model = await _vehicleMakeRepository.GetFirstAsync(predicate);
+            if (model == null)
+                throw new KeyNotFoundException("Model vozila nije pronađen.");
+
+            return model;
+        }
+
+
+
+
 
         public async Task<IVehicleMake> AddMake(IVehicleMake make)
         {
@@ -98,7 +111,7 @@ namespace Project.Service
             if (string.IsNullOrWhiteSpace(make.Name))
                 throw new ArgumentException("Ime proizvođača vozila je obavezno", nameof(make));
 
-            // Provjera da li proizvođač postoji
+            
             var existingMake = await _vehicleMakeRepository.GetByIdAsync(make.Id);
             if (existingMake == null)
                 throw new InvalidOperationException($"Proizvođač vozila s ID-om {make.Id} ne postoji");

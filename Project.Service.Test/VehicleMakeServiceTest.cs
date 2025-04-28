@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Linq.Expressions;
 using FluentAssertions;
 using Moq;
+using Project.Model;
 using Project.Common;
 using Project.Common.Paging;
 using Project.Common.Sorting;
@@ -132,7 +133,7 @@ namespace Project.Service.Test
         }
 
         [Fact]
-        public async Task AddMake_WithValidMake_ShouldAddAndReturnMake()
+        public async Task AddMake_WithValidMake()
         {
            
             var make = Mock.Of<IVehicleMake>(m => m.Name == "Toyota" && m.Abrv == "TOY");
@@ -168,5 +169,30 @@ namespace Project.Service.Test
 
             _mockRepository.Verify(repo => repo.AddAsync(It.IsAny<IVehicleMake>()), Times.Never);
         }
+
+        [Fact]
+        public async Task GetFirstMakeAsync_WhenMakeExists()
+        {
+            var expectedModel = new VehicleMake { Id = 1, Name = "Model 1" };
+            _mockRepository.Setup(x => x.GetFirstAsync(It.IsAny<Expression<Func<IVehicleMake, bool>>>()))
+                .ReturnsAsync(expectedModel);
+
+            var result = await _service.GetFirstMakeAsync(m => m.Name == "Model 1");
+
+            result.Should().BeEquivalentTo(expectedModel);
+        }
+
+        [Fact]
+        public async Task GetFirstMakeAsync_WhenMakeDoesNotExist()
+        {
+            _mockRepository.Setup(x => x.GetFirstAsync(It.IsAny<Expression<Func<IVehicleMake, bool>>>()))
+                .ReturnsAsync((IVehicleMake)null);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() =>
+                _service.GetFirstMakeAsync(m => m.Name == "NonExistentModel"));
+        }
     }
+
+
+}
 }
