@@ -31,12 +31,7 @@ public class VehicleMakeRepository : GenericRepository<IVehicleMake, Entities.Ve
         return query;
     }
 
-    /// <summary>
-    /// Primjenjuje sortiranje na upit
-    /// </summary>
-    /// <param name="query">Izvorni upit</param>
-    /// <param name="options">Opcije upita</param>
-    /// <returns>Sortirani upit</returns>
+    
     protected override IQueryable<Entities.VehicleMake> ApplySorting(IQueryable<Entities.VehicleMake> query, QueryOptions options)
     {
         if (!string.IsNullOrWhiteSpace(options.Sorting.SortBy))

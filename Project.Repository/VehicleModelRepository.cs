@@ -11,38 +11,21 @@ using Project.Common.Paging;
 
 namespace Project.Repository;
 
-/// <summary>
-/// Repozitorij za modele vozila
-/// </summary>
+
 public class VehicleModelRepository : GenericRepository<IVehicleModel, Entities.VehicleModel>, IVehicleModelRepository
 {
-    /// <summary>
-    /// Konstruktor za VehicleModelRepository
-    /// </summary>
-    /// <param name="context">Kontekst baze podataka</param>
-    /// <param name="mapper">AutoMapper instanca</param>
     public VehicleModelRepository(VehicleDbContext context, IMapper mapper) : base(context, mapper)
     {
     }
 
-    /// <summary>
-    /// Dohvaća modele vozila za određenog proizvođača
-    /// </summary>
-    /// <param name="makeId">ID proizvođača vozila</param>
-    /// <param name="queryOptions">Opcije upita za filtriranje, sortiranje i paginaciju</param>
-    /// <returns>Kolekcija modela vozila</returns>
+   
     public async Task<IEnumerable<IVehicleModel>> GetByMakeIdAsync(int makeId, QueryOptions queryOptions)
     {
         var entities = await _dbSet.Where(m => m.MakeId == makeId).ToListAsync();
         return entities.Select(MapEntityToModel);
     }
 
-    /// <summary>
-    /// Dohvaća straničene modele vozila za određenog proizvođača
-    /// </summary>
-    /// <param name="makeId">ID proizvođača vozila</param>
-    /// <param name="queryOptions">Opcije upita za filtriranje, sortiranje i paginaciju</param>
-    /// <returns>Straničeni rezultat modela vozila</returns>
+    
     public async Task<PagedResult<IVehicleModel>> GetPagedByMakeIdAsync(int makeId, QueryOptions queryOptions)
     {
         IQueryable<Entities.VehicleModel> query = _dbSet.Where(m => m.MakeId == makeId);
@@ -69,12 +52,7 @@ public class VehicleModelRepository : GenericRepository<IVehicleModel, Entities.
             queryOptions.Paging.PageSize);
     }
 
-    /// <summary>
-    /// Primjenjuje filtriranje na upit
-    /// </summary>
-    /// <param name="query">Izvorni upit</param>
-    /// <param name="options">Opcije upita</param>
-    /// <returns>Filtrirani upit</returns>
+   
     protected override IQueryable<Entities.VehicleModel> ApplyFiltering(IQueryable<Entities.VehicleModel> query, QueryOptions options)
     {
         if (options.Filtering != null && !string.IsNullOrWhiteSpace(options.Filtering.SearchText))
@@ -93,13 +71,7 @@ public class VehicleModelRepository : GenericRepository<IVehicleModel, Entities.
         return query;
     }
 
-    /// <summary>
-    /// Primjenjuje sortiranje na upit
-    /// </summary>
-    /// <param name="query">Izvorni upit</param>
-    /// <param name="options">Opcije upita</param>
-    /// <returns>Sortirani upit</returns>
-    protected override IQueryable<Entities.VehicleModel> ApplySorting(IQueryable<Entities.VehicleModel> query, QueryOptions options)
+       protected override IQueryable<Entities.VehicleModel> ApplySorting(IQueryable<Entities.VehicleModel> query, QueryOptions options)
     {
         if (!string.IsNullOrWhiteSpace(options.Sorting.SortBy))
         {

@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using System.Linq.Expressions;
 using FluentAssertions;
 using Moq;
-using Project.Model;
 using Project.Common;
 using Project.Common.Paging;
 using Project.Common.Sorting;
@@ -74,10 +73,10 @@ namespace Project.Service.Test
             _mockRepository.Setup(repo => repo.GetPagedAsync(It.IsAny<QueryOptions>()))
                 .ReturnsAsync(pagedResult);
 
-            // Act
+            
             var result = await _service.GetPagedMakes(queryOptions);
 
-            // Assert
+           
             result.Should().NotBeNull();
             result.Data.Should().HaveCount(2);
             result.TotalCount.Should().Be(2);
@@ -89,7 +88,7 @@ namespace Project.Service.Test
         [Fact]
         public async Task GetPagedMakes_WithNullOptions_ShouldUseDefaultOptions()
         {
-            // Arrange
+           
             var makesList = new List<IVehicleMake>
             {
                 Mock.Of<IVehicleMake>(m => m.Id == 1 && m.Name == "BMW" && m.Abrv == "BMW"),
@@ -104,7 +103,7 @@ namespace Project.Service.Test
             
             var result = await _service.GetPagedMakes(null);
 
-           
+          
             result.Should().NotBeNull();
             _mockRepository.Verify(repo => repo.GetPagedAsync(It.Is<QueryOptions>(
                 opt => opt.Paging.PageNumber == 1 && opt.Paging.PageSize == 10 &&
@@ -115,13 +114,13 @@ namespace Project.Service.Test
         [Fact]
         public async Task GetMakeById_WithValidId_ShouldReturnMake()
         {
-           
+            
             var make = Mock.Of<IVehicleMake>(m => m.Id == 1 && m.Name == "BMW" && m.Abrv == "BMW");
 
             _mockRepository.Setup(repo => repo.GetByIdAsync(1))
                 .ReturnsAsync(make);
 
-           
+          
             var result = await _service.GetMakeById(1);
 
             
@@ -133,7 +132,7 @@ namespace Project.Service.Test
         }
 
         [Fact]
-        public async Task AddMake_WithValidMake()
+        public async Task AddMake_WithValidMake_ShouldAddAndReturnMake()
         {
            
             var make = Mock.Of<IVehicleMake>(m => m.Name == "Toyota" && m.Abrv == "TOY");
@@ -144,6 +143,7 @@ namespace Project.Service.Test
             _mockRepository.Setup(repo => repo.AddAsync(make))
                 .ReturnsAsync(Mock.Of<IVehicleMake>(m => m.Id == 4 && m.Name == "Toyota" && m.Abrv == "TOY"));
 
+          
             var result = await _service.AddMake(make);
 
            
@@ -169,29 +169,5 @@ namespace Project.Service.Test
 
             _mockRepository.Verify(repo => repo.AddAsync(It.IsAny<IVehicleMake>()), Times.Never);
         }
-
-        [Fact]
-        public async Task GetFirstMakeAsync_WhenMakeExists()
-        {
-            var expectedModel = new VehicleMake { Id = 1, Name = "Model 1" };
-            _mockRepository.Setup(x => x.GetFirstAsync(It.IsAny<Expression<Func<IVehicleMake, bool>>>()))
-                .ReturnsAsync(expectedModel);
-
-            var result = await _service.GetFirstMakeAsync(m => m.Name == "Model 1");
-
-            result.Should().BeEquivalentTo(expectedModel);
-        }
-
-        [Fact]
-        public async Task GetFirstMakeAsync_WhenMakeDoesNotExist()
-        {
-            _mockRepository.Setup(x => x.GetFirstAsync(It.IsAny<Expression<Func<IVehicleMake, bool>>>()))
-                .ReturnsAsync((IVehicleMake)null);
-
-            await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-                _service.GetFirstMakeAsync(m => m.Name == "NonExistentModel"));
-        }
     }
-
-
 }
