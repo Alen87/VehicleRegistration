@@ -39,16 +39,18 @@ namespace Project.Service.Test
                 Mock.Of<IVehicleMake>(m => m.Id == 3 && m.Name == "Mercedes" && m.Abrv == "MERC")
             };
 
-            _mockRepository.Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(makesList);
+            var pagedResult = new PagedResult<IVehicleMake>(makesList, 3, 1, int.MaxValue);
 
-            var result = await _service.GetAllMakes();
+            _mockRepository.Setup(repo => repo.GetPagedAsync(It.IsAny<QueryOptions>()))
+                .ReturnsAsync(pagedResult);
+
+            var result = await _service.GetAllMakes(new QueryOptions());
 
            
             result.Should().NotBeNull();
-            result.Should().HaveCount(3);
-            result.Should().BeEquivalentTo(makesList);
-            _mockRepository.Verify(repo => repo.GetAllAsync(), Times.Once);
+            result.Data.Should().HaveCount(3);
+            result.Data.Should().BeEquivalentTo(makesList);
+            _mockRepository.Verify(repo => repo.GetPagedAsync(It.IsAny<QueryOptions>()), Times.Once);
         }
 
         [Fact]

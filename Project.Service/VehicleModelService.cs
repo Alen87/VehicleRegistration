@@ -21,9 +21,17 @@ namespace Project.Service
             _vehicleModelRepository = vehicleModelRepository;
         }
 
-        public async Task<IEnumerable<IVehicleModel>> GetAllModels()
+        public async Task<PagedResult<IVehicleModel>> GetAllModels(QueryOptions queryOptions)
         {
-            return await _vehicleModelRepository.GetAllAsync();
+            if (queryOptions == null)
+            {
+                queryOptions = new QueryOptions();
+            }
+
+           
+            queryOptions.Paging = new PagingOptions { PageNumber = 1, PageSize = int.MaxValue };
+
+            return await _vehicleModelRepository.GetPagedAsync(queryOptions);
         }
 
         public async Task<PagedResult<IVehicleModel>> GetPagedModels(QueryOptions queryOptions)

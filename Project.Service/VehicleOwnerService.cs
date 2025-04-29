@@ -21,9 +21,17 @@ namespace Project.Service
             _vehicleOwnerRepository = vehicleOwnerRepository;
         }
 
-        public async Task<IEnumerable<IVehicleOwner>> GetAllOwners()
+        public async Task<PagedResult<IVehicleOwner>> GetAllOwners(QueryOptions queryOptions)
         {
-            return await _vehicleOwnerRepository.GetAllAsync();
+            if (queryOptions == null)
+            {
+                queryOptions = new QueryOptions();
+            }
+
+         
+            queryOptions.Paging = new PagingOptions { PageNumber = 1, PageSize = int.MaxValue };
+
+            return await _vehicleOwnerRepository.GetPagedAsync(queryOptions);
         }
 
         public async Task<PagedResult<IVehicleOwner>> GetPagedOwners(QueryOptions queryOptions)

@@ -10,7 +10,7 @@ namespace Project.Service.Common
 {
     public interface IVehicleModelService
     {
-        Task<IEnumerable<IVehicleModel>> GetAllModels();
+        Task<PagedResult<IVehicleModel>> GetAllModels(QueryOptions queryOptions);
         Task<PagedResult<IVehicleModel>> GetPagedModels(QueryOptions queryOptions);
         Task<IVehicleModel> GetModelById(int id);
         Task<IVehicleModel> GetFirstModelAsync(Expression<Func<IVehicleModel, bool>> predicate);

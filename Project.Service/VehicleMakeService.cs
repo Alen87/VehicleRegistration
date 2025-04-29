@@ -24,9 +24,17 @@ namespace Project.Service
         }
 
        
-        public async Task<IEnumerable<IVehicleMake>> GetAllMakes()
+        public async Task<PagedResult<IVehicleMake>> GetAllMakes(QueryOptions queryOptions)
         {
-            return await _vehicleMakeRepository.GetAllAsync();
+            if (queryOptions == null)
+            {
+                queryOptions = new QueryOptions();
+            }
+
+           
+            queryOptions.Paging = new PagingOptions { PageNumber = 1, PageSize = int.MaxValue };
+
+            return await _vehicleMakeRepository.GetPagedAsync(queryOptions);
         }
 
        
@@ -72,11 +80,14 @@ namespace Project.Service
 
         public async Task<IVehicleMake> GetFirstMakeAsync(Expression<Func<IVehicleMake, bool>> predicate)
         {
-            var model = await _vehicleMakeRepository.GetFirstAsync(predicate);
-            if (model == null)
-                throw new KeyNotFoundException("Model vozila nije pronađen.");
+            if (predicate == null)
+                throw new ArgumentNullException(nameof(predicate), " Ne može biti null");
 
-            return model;
+            var make = await _vehicleMakeRepository.GetFirstAsync(predicate);
+            if (make == null)
+                throw new KeyNotFoundException("Proizvođač vozila nije pronađen.");
+            
+            return make;
         }
 
 

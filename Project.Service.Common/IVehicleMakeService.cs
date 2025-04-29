@@ -12,7 +12,7 @@ namespace Project.Service.Common
     public interface IVehicleMakeService
     {
        
-        Task<IEnumerable<IVehicleMake>> GetAllMakes();
+        Task<PagedResult<IVehicleMake>> GetAllMakes(QueryOptions queryOptions);
         Task<PagedResult<IVehicleMake>> GetPagedMakes(QueryOptions queryOptions);
 
         Task<IVehicleMake> GetMakeById(int id);

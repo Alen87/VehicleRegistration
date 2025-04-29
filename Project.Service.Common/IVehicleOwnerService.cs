@@ -10,7 +10,7 @@ namespace Project.Service.Common
 {
     public interface IVehicleOwnerService
     {
-        Task<IEnumerable<IVehicleOwner>> GetAllOwners();
+        Task<PagedResult<IVehicleOwner>> GetAllOwners(QueryOptions queryOptions);
         Task<PagedResult<IVehicleOwner>> GetPagedOwners(QueryOptions queryOptions);
         Task<IVehicleOwner> GetOwnerById(int id);
         Task<IVehicleOwner> GetFirstOwnerAsync(Expression<Func<IVehicleOwner, bool>> predicate);

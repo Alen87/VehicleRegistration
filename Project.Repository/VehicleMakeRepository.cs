@@ -12,12 +12,12 @@ namespace Project.Repository;
 
 public class VehicleMakeRepository : GenericRepository<IVehicleMake, Entities.VehicleMake>, IVehicleMakeRepository
 {
-  
+
     public VehicleMakeRepository(VehicleDbContext context, IMapper mapper) : base(context, mapper)
     {
     }
 
-    
+
     protected override IQueryable<Entities.VehicleMake> ApplyFiltering(IQueryable<Entities.VehicleMake> query, QueryOptions options)
     {
         if (options.Filtering != null && !string.IsNullOrWhiteSpace(options.Filtering.SearchText))
@@ -31,7 +31,7 @@ public class VehicleMakeRepository : GenericRepository<IVehicleMake, Entities.Ve
         return query;
     }
 
-    
+
     protected override IQueryable<Entities.VehicleMake> ApplySorting(IQueryable<Entities.VehicleMake> query, QueryOptions options)
     {
         if (!string.IsNullOrWhiteSpace(options.Sorting.SortBy))

@@ -35,12 +35,17 @@ namespace Project.Service.Test
                 new VehicleModel { Id = 1, Name = "Model 1", MakeId = 1 },
                 new VehicleModel { Id = 2, Name = "Model 2", MakeId = 1 }
             };
-            _mockRepository.Setup(x => x.GetAllAsync())
-                .ReturnsAsync(expectedModels);
+            
+            var pagedResult = new PagedResult<IVehicleModel>(expectedModels, 2, 1, int.MaxValue);
+            
+            _mockRepository.Setup(x => x.GetPagedAsync(It.IsAny<QueryOptions>()))
+                .ReturnsAsync(pagedResult);
 
-            var result = await _service.GetAllModels();
+            var result = await _service.GetAllModels(new QueryOptions());
 
-            result.Should().BeEquivalentTo(expectedModels);
+            result.Should().NotBeNull();
+            result.Data.Should().BeEquivalentTo(expectedModels);
+            result.TotalCount.Should().Be(2);
         }
 
         [Fact]
