@@ -6,8 +6,10 @@ using Project.Model.Common;
 using Project.Repository.Common;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System.Linq.Expressions;
 using Project.Common;
 using Project.Common.Paging;
+using System.Text.RegularExpressions;
 
 namespace Project.Repository;
 
@@ -18,7 +20,61 @@ public class VehicleModelRepository : GenericRepository<IVehicleModel, Entities.
     {
     }
 
-   
+    protected override async Task<IVehicleModel?> FindModelAsync(Expression<Func<IVehicleModel, bool>> predicate)
+    {
+        if (TryExtractIdFromPredicate(predicate, out int id))
+        {
+            var entity = await _dbSet.FindAsync(id);
+            return entity != null ? MapEntityToModel(entity) : default;
+        }
+        
+        if (TryExtractPropertyValueFromPredicate(predicate, "Name", out string name))
+        {
+            var entity = await _dbSet
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Name.ToLower() == name.ToLower());
+            return entity != null ? MapEntityToModel(entity) : default;
+        }
+        
+        if (TryExtractNumericPropertyValueFromPredicate(predicate, "MakeId", out int makeId))
+        {
+            var entity = await _dbSet
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.MakeId == makeId);
+            return entity != null ? MapEntityToModel(entity) : default;
+        }
+        
+        var entities = await _dbSet.ToListAsync();
+        var models = entities.Select(MapEntityToModel);
+        return models.FirstOrDefault(predicate.Compile());
+    }
+    
+    protected override async Task<bool> ExistsModelAsync(Expression<Func<IVehicleModel, bool>> predicate)
+    {
+        if (TryExtractIdFromPredicate(predicate, out int id))
+        {
+            return await _dbSet.AnyAsync(e => e.Id == id);
+        }
+        
+        if (TryExtractPropertyValueFromPredicate(predicate, "Name", out string name))
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .AnyAsync(e => e.Name.ToLower() == name.ToLower());
+        }
+        
+        if (TryExtractNumericPropertyValueFromPredicate(predicate, "MakeId", out int makeId))
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .AnyAsync(e => e.MakeId == makeId);
+        }
+        
+        var entities = await _dbSet.ToListAsync();
+        var models = entities.Select(MapEntityToModel);
+        return models.Any(predicate.Compile());
+    }
+
     public async Task<IEnumerable<IVehicleModel>> GetByMakeIdAsync(int makeId, QueryOptions queryOptions)
     {
         var entities = await _dbSet.Where(m => m.MakeId == makeId).ToListAsync();

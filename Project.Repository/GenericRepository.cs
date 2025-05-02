@@ -8,6 +8,7 @@ using Project.Common;
 using Project.Common.Paging;
 using Project.Common.Sorting;
 using Project.DAL;
+using System.Text.RegularExpressions;
 
 namespace Project.Repository;
 
@@ -70,9 +71,8 @@ public abstract class GenericRepository<T, TEntity> : IGenericRepository<T>
 
     public virtual async Task<T?> GetFirstAsync(Expression<Func<T, bool>> predicate)
     {
-        var entities = await _dbSet.ToListAsync();
-        var models = entities.Select(MapEntityToModel);
-        return models.FirstOrDefault(predicate.Compile());
+       
+        return await FindModelAsync(predicate);
     }
 
    
@@ -80,21 +80,20 @@ public abstract class GenericRepository<T, TEntity> : IGenericRepository<T>
     {
         var entityToAdd = MapModelToEntity(entity);
         var result = await _dbSet.AddAsync(entityToAdd);
-        await _context.SaveChangesAsync();
-
+  
+        
         return MapEntityToModel(result.Entity);
     }
 
    
-    public virtual async Task<T> UpdateAsync(T entity)
+    public virtual Task<T> UpdateAsync(T entity)
     {
         var entityToUpdate = MapModelToEntity(entity);
-
-        // Attach ako nije praćen
+        
         _context.Entry(entityToUpdate).State = EntityState.Modified;
-
-        await _context.SaveChangesAsync();
-        return entity;
+        
+        
+        return Task.FromResult(entity);
     }
 
    
@@ -104,25 +103,29 @@ public abstract class GenericRepository<T, TEntity> : IGenericRepository<T>
         if (entity == null) return false;
 
         _dbSet.Remove(entity);
-        await _context.SaveChangesAsync();
+       
+        
         return true;
     }
 
     public virtual async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate)
     {
-      
-        var entities = await _dbSet.ToListAsync();
-        var models = entities.Select(MapEntityToModel);
-        return models.Any(predicate.Compile());
+       
+        return await ExistsModelAsync(predicate);
     }
 
-   
+    
+    protected abstract Task<T?> FindModelAsync(Expression<Func<T, bool>> predicate);
+    
+    
+    protected abstract Task<bool> ExistsModelAsync(Expression<Func<T, bool>> predicate);
+
     protected virtual T MapEntityToModel(TEntity entity)
     {
         return _mapper.Map<T>(entity);
     }
 
-     protected virtual TEntity MapModelToEntity(T model)
+    protected virtual TEntity MapModelToEntity(T model)
     {
         return _mapper.Map<TEntity>(model);
     }
@@ -131,4 +134,81 @@ public abstract class GenericRepository<T, TEntity> : IGenericRepository<T>
 
    
     protected abstract IQueryable<TEntity> ApplySorting(IQueryable<TEntity> query, QueryOptions options);
+    
+   
+    protected bool TryExtractIdFromPredicate<TModel>(Expression<Func<TModel, bool>> predicate, out int id) where TModel : class
+    {
+        id = 0;
+        var predicateString = predicate.ToString().ToLower();
+        
+       
+        var regex = new Regex(@"(\w+)\s*=>\s*\1\.id\s*==\s*(\d+)");
+        var match = regex.Match(predicateString);
+        
+        if (match.Success && match.Groups.Count >= 3)
+        {
+            string idStr = match.Groups[2].Value.Trim();
+            
+            if (int.TryParse(idStr, out id))
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    
+    protected bool TryExtractPropertyValueFromPredicate<TModel>(Expression<Func<TModel, bool>> predicate, string propertyName, out string value) where TModel : class
+    {
+        value = string.Empty;
+        var predicateString = predicate.ToString().ToLower();
+        var propNameLower = propertyName.ToLower();
+        
+        
+        var regex = new Regex($@"\.{propNameLower}\.tolower\(\)\s*==\s*""([^""]+)""");
+        var match = regex.Match(predicateString);
+        
+        if (match.Success && match.Groups.Count >= 2)
+        {
+            value = match.Groups[1].Value;
+            return true;
+        }
+        
+       
+        regex = new Regex($@"""([^""]+)""\.equals\(.*\.{propNameLower}\.tolower\(\)\)");
+        match = regex.Match(predicateString);
+        
+        if (match.Success && match.Groups.Count >= 2)
+        {
+            value = match.Groups[1].Value;
+            return true;
+        }
+        
+        return false;
+    }
+    
+    
+    protected bool TryExtractNumericPropertyValueFromPredicate<TModel>(Expression<Func<TModel, bool>> predicate, string propertyName, out int value) where TModel : class
+    {
+        value = 0;
+        var predicateString = predicate.ToString().ToLower();
+        var propNameLower = propertyName.ToLower();
+        
+       
+        var regex = new Regex($@"\.{propNameLower}\s*==\s*(\d+)");
+        var match = regex.Match(predicateString);
+        
+        if (match.Success && match.Groups.Count >= 2)
+        {
+            string valueStr = match.Groups[1].Value.Trim();
+            
+            if (int.TryParse(valueStr, out value))
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
 }

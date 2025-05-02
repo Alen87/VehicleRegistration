@@ -6,6 +6,8 @@ using Project.Repository.Common;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using Project.Common;
+using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 
 namespace Project.Repository;
 
@@ -13,6 +15,52 @@ public class VehicleEngineTypeRepository : GenericRepository<IVehicleEngineType,
 {
     public VehicleEngineTypeRepository(VehicleDbContext context, IMapper mapper) : base(context, mapper)
     {
+    }
+    
+    protected override async Task<IVehicleEngineType?> FindModelAsync(Expression<Func<IVehicleEngineType, bool>> predicate)
+    {
+        
+        if (TryExtractIdFromPredicate(predicate, out int id))
+        {
+            var entity = await _dbSet.FindAsync(id);
+            return entity != null ? MapEntityToModel(entity) : default;
+        }
+        
+      
+        if (TryExtractPropertyValueFromPredicate(predicate, "Type", out string type))
+        {
+            var entity = await _dbSet
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Type.ToLower() == type.ToLower());
+            return entity != null ? MapEntityToModel(entity) : default;
+        }
+        
+     
+        var entities = await _dbSet.ToListAsync();
+        var models = entities.Select(MapEntityToModel);
+        return models.FirstOrDefault(predicate.Compile());
+    }
+    
+    protected override async Task<bool> ExistsModelAsync(Expression<Func<IVehicleEngineType, bool>> predicate)
+    {
+      
+        if (TryExtractIdFromPredicate(predicate, out int id))
+        {
+            return await _dbSet.AnyAsync(e => e.Id == id);
+        }
+        
+        
+        if (TryExtractPropertyValueFromPredicate(predicate, "Type", out string type))
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .AnyAsync(e => e.Type.ToLower() == type.ToLower());
+        }
+        
+      
+        var entities = await _dbSet.ToListAsync();
+        var models = entities.Select(MapEntityToModel);
+        return models.Any(predicate.Compile());
     }
     
     protected override IQueryable<Entities.VehicleEngineType> ApplyFiltering(IQueryable<Entities.VehicleEngineType> query, QueryOptions options)

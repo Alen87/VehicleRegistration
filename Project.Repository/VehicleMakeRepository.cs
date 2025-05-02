@@ -4,8 +4,10 @@ using Project.Model.Common;
 using Entities = Project.DAL.Entities;
 using Project.Repository.Common;
 using System.Linq;
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Project.Common;
+using System.Text.RegularExpressions;
 
 namespace Project.Repository;
 
@@ -17,6 +19,45 @@ public class VehicleMakeRepository : GenericRepository<IVehicleMake, Entities.Ve
     {
     }
 
+    protected override async Task<IVehicleMake?> FindModelAsync(Expression<Func<IVehicleMake, bool>> predicate)
+    {
+        if (TryExtractIdFromPredicate(predicate, out int id))
+        {
+            var entity = await _dbSet.FindAsync(id);
+            return entity != null ? MapEntityToModel(entity) : default;
+        }
+        
+        if (TryExtractPropertyValueFromPredicate(predicate, "Name", out string name))
+        {
+            var entity = await _dbSet
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Name.ToLower() == name.ToLower());
+            return entity != null ? MapEntityToModel(entity) : default;
+        }
+        
+        var entities = await _dbSet.ToListAsync();
+        var models = entities.Select(MapEntityToModel);
+        return models.FirstOrDefault(predicate.Compile());
+    }
+    
+    protected override async Task<bool> ExistsModelAsync(Expression<Func<IVehicleMake, bool>> predicate)
+    {
+        if (TryExtractIdFromPredicate(predicate, out int id))
+        {
+            return await _dbSet.AnyAsync(e => e.Id == id);
+        }
+        
+        if (TryExtractPropertyValueFromPredicate(predicate, "Name", out string name))
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .AnyAsync(e => e.Name.ToLower() == name.ToLower());
+        }
+        
+        var entities = await _dbSet.ToListAsync();
+        var models = entities.Select(MapEntityToModel);
+        return models.Any(predicate.Compile());
+    }
 
     protected override IQueryable<Entities.VehicleMake> ApplyFiltering(IQueryable<Entities.VehicleMake> query, QueryOptions options)
     {
