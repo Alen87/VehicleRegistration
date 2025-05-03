@@ -14,11 +14,11 @@ namespace Project.Service
 {
     public class VehicleOwnerService : IVehicleOwnerService
     {
-        private readonly IVehicleOwnerRepository _vehicleOwnerRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public VehicleOwnerService(IVehicleOwnerRepository vehicleOwnerRepository)
+        public VehicleOwnerService(IUnitOfWork unitOfWork)
         {
-            _vehicleOwnerRepository = vehicleOwnerRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<PagedResult<IVehicleOwner>> GetAllOwners(QueryOptions queryOptions)
@@ -31,7 +31,7 @@ namespace Project.Service
          
             queryOptions.Paging = new PagingOptions { PageNumber = 1, PageSize = int.MaxValue };
 
-            return await _vehicleOwnerRepository.GetPagedAsync(queryOptions);
+            return await _unitOfWork.VehicleOwnerRepository.GetPagedAsync(queryOptions);
         }
 
         public async Task<PagedResult<IVehicleOwner>> GetPagedOwners(QueryOptions queryOptions)
@@ -59,12 +59,12 @@ namespace Project.Service
                 queryOptions.Sorting = new SortOptions { SortBy = "LastName", SortAscending = true };
             }
 
-            return await _vehicleOwnerRepository.GetPagedAsync(queryOptions);
+            return await _unitOfWork.VehicleOwnerRepository.GetPagedAsync(queryOptions);
         }
 
         public async Task<IVehicleOwner> GetOwnerById(int id)
         {
-            var owner = await _vehicleOwnerRepository.GetByIdAsync(id);
+            var owner = await _unitOfWork.VehicleOwnerRepository.GetByIdAsync(id);
             if (owner == null)
                 throw new KeyNotFoundException($"Vlasnik vozila s ID-om {id} nije pronađen.");
             
@@ -89,7 +89,9 @@ namespace Project.Service
             if (exists)
                 throw new InvalidOperationException($"Vlasnik vozila s imenom '{owner.FirstName}' i prezimenom '{owner.LastName}' već postoji");
 
-            return await _vehicleOwnerRepository.AddAsync(owner);
+            var result = await _unitOfWork.VehicleOwnerRepository.AddAsync(owner);
+            await _unitOfWork.SaveChangesAsync();
+            return result;
         }
 
         public async Task<IVehicleOwner> UpdateOwner(IVehicleOwner owner)
@@ -109,11 +111,13 @@ namespace Project.Service
             if (owner.DateOfBirth == default)
                 throw new ArgumentException("Datum rođenja vlasnika vozila je obavezan", nameof(owner));
 
-            var existingOwner = await _vehicleOwnerRepository.GetByIdAsync(owner.Id);
+            var existingOwner = await _unitOfWork.VehicleOwnerRepository.GetByIdAsync(owner.Id);
             if (existingOwner == null)
                 throw new InvalidOperationException($"Vlasnik vozila s ID-om {owner.Id} ne postoji");
 
-            return await _vehicleOwnerRepository.UpdateAsync(owner);
+            var result = await _unitOfWork.VehicleOwnerRepository.UpdateAsync(owner);
+            await _unitOfWork.SaveChangesAsync();
+            return result;
         }
 
         public async Task<bool> DeleteOwner(int id)
@@ -121,7 +125,12 @@ namespace Project.Service
             if (id <= 0)
                 throw new ArgumentException("ID vlasnika vozila nije valjan", nameof(id));
 
-            return await _vehicleOwnerRepository.DeleteAsync(id);
+            var result = await _unitOfWork.VehicleOwnerRepository.DeleteAsync(id);
+            if (result)
+            {
+                await _unitOfWork.SaveChangesAsync();
+            }
+            return result;
         }
 
         public async Task<bool> OwnerExistsByFirstNameAndLastName(string firstName, string lastName)
@@ -129,14 +138,14 @@ namespace Project.Service
             if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
                 return false;
 
-            return await _vehicleOwnerRepository.ExistsAsync(o => 
+            return await _unitOfWork.VehicleOwnerRepository.ExistsAsync(o => 
                 o.FirstName.ToLower() == firstName.ToLower() && 
                 o.LastName.ToLower() == lastName.ToLower());
         }
 
         public async Task<IVehicleOwner> GetFirstOwnerAsync(Expression<Func<IVehicleOwner, bool>> predicate)
         {
-            var owner = await _vehicleOwnerRepository.GetFirstAsync(predicate);
+            var owner = await _unitOfWork.VehicleOwnerRepository.GetFirstAsync(predicate);
             if (owner == null)
                 throw new KeyNotFoundException("Vlasnik vozila nije pronađen.");
             

@@ -16,6 +16,7 @@ public class UnitOfWork : IUnitOfWork, IDisposable
     private IVehicleMakeRepository? _vehicleMakeRepository;
     private IVehicleModelRepository? _vehicleModelRepository;
     private IVehicleEngineTypeRepository? _vehicleEngineTypeRepository;
+    private IVehicleOwnerRepository? _vehicleOwnerRepository;
 
    
     public UnitOfWork(VehicleDbContext context, IMapper mapper)
@@ -50,6 +51,15 @@ public class UnitOfWork : IUnitOfWork, IDisposable
         {
             _vehicleEngineTypeRepository ??= new VehicleEngineTypeRepository(_context, _mapper);
             return _vehicleEngineTypeRepository;
+        }
+    }
+
+    public IVehicleOwnerRepository VehicleOwnerRepository
+    {
+        get
+        {
+            _vehicleOwnerRepository ??= new VehicleOwnerRepository(_context, _mapper);
+            return _vehicleOwnerRepository;
         }
     }
 
