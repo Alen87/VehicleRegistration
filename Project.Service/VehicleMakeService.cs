@@ -15,12 +15,12 @@ namespace Project.Service
 
     public class VehicleMakeService : IVehicleMakeService
     {
-        private readonly IVehicleMakeRepository _vehicleMakeRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
        
-        public VehicleMakeService(IVehicleMakeRepository vehicleMakeRepository)
+        public VehicleMakeService(IUnitOfWork unitOfWork)
         {
-            _vehicleMakeRepository = vehicleMakeRepository;
+            _unitOfWork = unitOfWork;
         }
 
        
@@ -34,7 +34,7 @@ namespace Project.Service
            
             queryOptions.Paging = new PagingOptions { PageNumber = 1, PageSize = int.MaxValue };
 
-            return await _vehicleMakeRepository.GetPagedAsync(queryOptions);
+            return await _unitOfWork.VehicleMakeRepository.GetPagedAsync(queryOptions);
         }
 
        
@@ -65,13 +65,13 @@ namespace Project.Service
                 queryOptions.Sorting = new SortOptions { SortBy = "Name", SortAscending = true };
             }
 
-            return await _vehicleMakeRepository.GetPagedAsync(queryOptions);
+            return await _unitOfWork.VehicleMakeRepository.GetPagedAsync(queryOptions);
         }
 
 
         public async Task<IVehicleMake> GetMakeById(int id)
         {
-            var make = await _vehicleMakeRepository.GetByIdAsync(id);
+            var make = await _unitOfWork.VehicleMakeRepository.GetByIdAsync(id);
             if (make == null)
                 throw new KeyNotFoundException($"Proizvođač vozila s ID-om {id} nije pronađen.");
 
@@ -83,7 +83,7 @@ namespace Project.Service
             if (predicate == null)
                 throw new ArgumentNullException(nameof(predicate), " Ne može biti null");
 
-            var make = await _vehicleMakeRepository.GetFirstAsync(predicate);
+            var make = await _unitOfWork.VehicleMakeRepository.GetFirstAsync(predicate);
             if (make == null)
                 throw new KeyNotFoundException("Proizvođač vozila nije pronađen.");
             
@@ -107,7 +107,9 @@ namespace Project.Service
             if (exists)
                 throw new InvalidOperationException($"Proizvođač vozila s imenom '{make.Name}' već postoji");
 
-            return await _vehicleMakeRepository.AddAsync(make);
+            var result = await _unitOfWork.VehicleMakeRepository.AddAsync(make);
+            await _unitOfWork.SaveChangesAsync();
+            return result;
         }
 
        
@@ -123,11 +125,13 @@ namespace Project.Service
                 throw new ArgumentException("Ime proizvođača vozila je obavezno", nameof(make));
 
             
-            var existingMake = await _vehicleMakeRepository.GetByIdAsync(make.Id);
+            var existingMake = await _unitOfWork.VehicleMakeRepository.GetByIdAsync(make.Id);
             if (existingMake == null)
                 throw new InvalidOperationException($"Proizvođač vozila s ID-om {make.Id} ne postoji");
 
-            return await _vehicleMakeRepository.UpdateAsync(make);
+            var result = await _unitOfWork.VehicleMakeRepository.UpdateAsync(make);
+            await _unitOfWork.SaveChangesAsync();
+            return result;
         }
 
       
@@ -136,9 +140,12 @@ namespace Project.Service
             if (id <= 0)
                 throw new ArgumentException("ID proizvođača vozila nije valjan", nameof(id));
 
-          
-
-            return await _vehicleMakeRepository.DeleteAsync(id);
+            var result = await _unitOfWork.VehicleMakeRepository.DeleteAsync(id);
+            if (result)
+            {
+                await _unitOfWork.SaveChangesAsync();
+            }
+            return result;
         }
 
        
@@ -148,7 +155,7 @@ namespace Project.Service
                 return false;
 
             
-            return await _vehicleMakeRepository.ExistsAsync(m => m.Name.ToLower() == name.ToLower());
+            return await _unitOfWork.VehicleMakeRepository.ExistsAsync(m => m.Name.ToLower() == name.ToLower());
         }
     }
 }

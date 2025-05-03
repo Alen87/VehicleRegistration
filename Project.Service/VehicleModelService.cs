@@ -14,11 +14,11 @@ namespace Project.Service
 {
     public class VehicleModelService : IVehicleModelService
     {
-        private readonly IVehicleModelRepository _vehicleModelRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public VehicleModelService(IVehicleModelRepository vehicleModelRepository)
+        public VehicleModelService(IUnitOfWork unitOfWork)
         {
-            _vehicleModelRepository = vehicleModelRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<PagedResult<IVehicleModel>> GetAllModels(QueryOptions queryOptions)
@@ -31,7 +31,7 @@ namespace Project.Service
            
             queryOptions.Paging = new PagingOptions { PageNumber = 1, PageSize = int.MaxValue };
 
-            return await _vehicleModelRepository.GetPagedAsync(queryOptions);
+            return await _unitOfWork.VehicleModelRepository.GetPagedAsync(queryOptions);
         }
 
         public async Task<PagedResult<IVehicleModel>> GetPagedModels(QueryOptions queryOptions)
@@ -59,12 +59,12 @@ namespace Project.Service
                 queryOptions.Sorting = new SortOptions { SortBy = "Name", SortAscending = true };
             }
 
-            return await _vehicleModelRepository.GetPagedAsync(queryOptions);
+            return await _unitOfWork.VehicleModelRepository.GetPagedAsync(queryOptions);
         }
 
         public async Task<IVehicleModel> GetModelById(int id)
         {
-            var model = await _vehicleModelRepository.GetByIdAsync(id);
+            var model = await _unitOfWork.VehicleModelRepository.GetByIdAsync(id);
             if (model == null)
                 throw new KeyNotFoundException($"Model vozila s ID-om {id} nije pronađen.");
             
@@ -74,7 +74,7 @@ namespace Project.Service
 
         public async Task<IVehicleModel> GetFirstModelAsync(Expression<Func<IVehicleModel, bool>> predicate)
         {
-            var model = await _vehicleModelRepository.GetFirstAsync(predicate);
+            var model = await _unitOfWork.VehicleModelRepository.GetFirstAsync(predicate);
             if (model == null)
                 throw new KeyNotFoundException("Model vozila nije pronađen.");
 
@@ -96,7 +96,9 @@ namespace Project.Service
             if (exists)
                 throw new InvalidOperationException($"Model vozila s imenom '{model.Name}' već postoji");
 
-            return await _vehicleModelRepository.AddAsync(model);
+            var result = await _unitOfWork.VehicleModelRepository.AddAsync(model);
+            await _unitOfWork.SaveChangesAsync();
+            return result;
         }
 
         public async Task<IVehicleModel> UpdateModel(IVehicleModel model)
@@ -113,11 +115,13 @@ namespace Project.Service
             if (model.MakeId <= 0)
                 throw new ArgumentException("ID proizvođača vozila je obavezan", nameof(model));
 
-            var existingModel = await _vehicleModelRepository.GetByIdAsync(model.Id);
+            var existingModel = await _unitOfWork.VehicleModelRepository.GetByIdAsync(model.Id);
             if (existingModel == null)
                 throw new InvalidOperationException($"Model vozila s ID-om {model.Id} ne postoji");
 
-            return await _vehicleModelRepository.UpdateAsync(model);
+            var result = await _unitOfWork.VehicleModelRepository.UpdateAsync(model);
+            await _unitOfWork.SaveChangesAsync();
+            return result;
         }
 
         public async Task<bool> DeleteModel(int id)
@@ -125,7 +129,12 @@ namespace Project.Service
             if (id <= 0)
                 throw new ArgumentException("ID modela vozila nije valjan", nameof(id));
 
-            return await _vehicleModelRepository.DeleteAsync(id);
+            var result = await _unitOfWork.VehicleModelRepository.DeleteAsync(id);
+            if (result)
+            {
+                await _unitOfWork.SaveChangesAsync();
+            }
+            return result;
         }
 
         public async Task<bool> ModelExistsByName(string name)
@@ -133,7 +142,7 @@ namespace Project.Service
             if (string.IsNullOrWhiteSpace(name))
                 return false;
 
-            return await _vehicleModelRepository.ExistsAsync(m => m.Name.ToLower() == name.ToLower());
+            return await _unitOfWork.VehicleModelRepository.ExistsAsync(m => m.Name.ToLower() == name.ToLower());
         }
 
        
