@@ -43,10 +43,10 @@ public class VehicleModelRepository : GenericRepository<IVehicleModel, Entities.
                 .FirstOrDefaultAsync(e => e.MakeId == makeId);
             return entity != null ? MapEntityToModel(entity) : default;
         }
-        
-        var entities = await _dbSet.ToListAsync();
-        var models = entities.Select(MapEntityToModel);
-        return models.FirstOrDefault(predicate.Compile());
+
+        return await _dbSet.AsNoTracking()
+            .Select(e => MapEntityToModel(e))
+            .FirstOrDefaultAsync(predicate);
     }
     
     protected override async Task<bool> ExistsModelAsync(Expression<Func<IVehicleModel, bool>> predicate)
@@ -69,10 +69,11 @@ public class VehicleModelRepository : GenericRepository<IVehicleModel, Entities.
                 .AsNoTracking()
                 .AnyAsync(e => e.MakeId == makeId);
         }
-        
-        var entities = await _dbSet.ToListAsync();
-        var models = entities.Select(MapEntityToModel);
-        return models.Any(predicate.Compile());
+
+         return await _dbSet.AsNoTracking()
+            .Select(e => MapEntityToModel(e))
+            .AnyAsync(predicate);
+    
     }
 
     public async Task<IEnumerable<IVehicleModel>> GetByMakeIdAsync(int makeId, QueryOptions queryOptions)

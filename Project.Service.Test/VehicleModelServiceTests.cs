@@ -18,13 +18,16 @@ namespace Project.Service.Test
 {
     public class VehicleModelServiceTests
     {
+        private readonly Mock<IUnitOfWork> _mockUnitOfWork;
         private readonly Mock<IVehicleModelRepository> _mockRepository;
         private readonly VehicleModelService _service;
 
         public VehicleModelServiceTests()
         {
             _mockRepository = new Mock<IVehicleModelRepository>();
-            _service = new VehicleModelService(_mockRepository.Object);
+            _mockUnitOfWork = new Mock<IUnitOfWork>();
+            _mockUnitOfWork.Setup(u => u.VehicleModelRepository).Returns(_mockRepository.Object);
+            _service = new VehicleModelService(_mockUnitOfWork.Object);
         }
 
         [Fact]
@@ -96,10 +99,12 @@ namespace Project.Service.Test
                 .ReturnsAsync(false);
             _mockRepository.Setup(x => x.AddAsync(model))
                 .ReturnsAsync(model);
+            _mockUnitOfWork.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
             var result = await _service.AddModel(model);
 
             result.Should().BeEquivalentTo(model);
+            _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
 
         [Fact]
@@ -110,6 +115,7 @@ namespace Project.Service.Test
                 .ReturnsAsync(true);
 
             await Assert.ThrowsAsync<InvalidOperationException>(() => _service.AddModel(model));
+            _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
         }
 
         [Fact]
@@ -120,10 +126,12 @@ namespace Project.Service.Test
                 .ReturnsAsync(model);
             _mockRepository.Setup(x => x.UpdateAsync(model))
                 .ReturnsAsync(model);
+            _mockUnitOfWork.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
             var result = await _service.UpdateModel(model);
 
             result.Should().BeEquivalentTo(model);
+            _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
 
         [Fact]
@@ -131,10 +139,12 @@ namespace Project.Service.Test
         {
             _mockRepository.Setup(x => x.DeleteAsync(1))
                 .ReturnsAsync(true);
+            _mockUnitOfWork.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
             var result = await _service.DeleteModel(1);
 
             result.Should().BeTrue();
+            _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
 
         [Fact]

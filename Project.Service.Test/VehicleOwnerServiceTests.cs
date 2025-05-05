@@ -18,32 +18,43 @@ namespace Project.Service.Test
 {
     public class VehicleOwnerServiceTests
     {
+        private readonly Mock<IUnitOfWork> _mockUnitOfWork;
         private readonly Mock<IVehicleOwnerRepository> _mockRepository;
         private readonly VehicleOwnerService _service;
 
         public VehicleOwnerServiceTests()
         {
             _mockRepository = new Mock<IVehicleOwnerRepository>();
-            _service = new VehicleOwnerService(_mockRepository.Object);
+            _mockUnitOfWork = new Mock<IUnitOfWork>();
+            _mockUnitOfWork.Setup(u => u.VehicleOwnerRepository).Returns(_mockRepository.Object);
+            _service = new VehicleOwnerService(_mockUnitOfWork.Object);
         }
 
         [Fact]
         public async Task GetAllOwners_ShouldReturnAllOwners()
         {
+            // Arrange
+            var queryOptions = new QueryOptions
+            {
+                Paging = new PagingOptions { PageNumber = 1, PageSize = int.MaxValue },
+                Sorting = new SortOptions()
+            };
             
             var expectedOwners = new List<IVehicleOwner>
             {
                 new VehicleOwner { Id = 1, FirstName = "Pero", LastName = "Peric", DateOfBirth = new DateTime(1990, 1, 1) },
                 new VehicleOwner { Id = 2, FirstName = "Marko", LastName = "Maric", DateOfBirth = new DateTime(1992, 2, 2) }
             };
-            _mockRepository.Setup(x => x.GetAllAsync())
-                .ReturnsAsync(expectedOwners);
+            
+            var pagedResult = new PagedResult<IVehicleOwner>(expectedOwners, expectedOwners.Count, 1, int.MaxValue);
+            _mockRepository.Setup(x => x.GetPagedAsync(It.IsAny<QueryOptions>()))
+                .ReturnsAsync(pagedResult);
 
             
-            var result = await _service.GetAllOwners();
+            var result = await _service.GetAllOwners(queryOptions);
 
-            
-            result.Should().BeEquivalentTo(expectedOwners);
+           
+            result.Should().BeEquivalentTo(pagedResult);
         }
 
         [Fact]
@@ -103,6 +114,7 @@ namespace Project.Service.Test
                 .ReturnsAsync(false);
             _mockRepository.Setup(x => x.AddAsync(owner))
                 .ReturnsAsync(owner);
+            _mockUnitOfWork.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
 
           
             var result = await _service.AddOwner(owner);
@@ -131,6 +143,7 @@ namespace Project.Service.Test
                 .ReturnsAsync(owner);
             _mockRepository.Setup(x => x.UpdateAsync(owner))
                 .ReturnsAsync(owner);
+            _mockUnitOfWork.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
 
             
             var result = await _service.UpdateOwner(owner);
@@ -145,6 +158,7 @@ namespace Project.Service.Test
             
             _mockRepository.Setup(x => x.DeleteAsync(1))
                 .ReturnsAsync(true);
+            _mockUnitOfWork.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
 
             
             var result = await _service.DeleteOwner(1);

@@ -40,10 +40,10 @@ public class VehicleOwnerRepository : GenericRepository<IVehicleOwner, Entities.
                 .FirstOrDefaultAsync(e => e.LastName.ToLower() == lastName.ToLower());
             return entity != null ? MapEntityToModel(entity) : default;
         }
-        
-        var entities = await _dbSet.ToListAsync();
-        var models = entities.Select(MapEntityToModel);
-        return models.FirstOrDefault(predicate.Compile());
+
+         return await _dbSet.AsNoTracking()
+            .Select(e => MapEntityToModel(e))
+            .FirstOrDefaultAsync(predicate);
     }
     
     protected override async Task<bool> ExistsModelAsync(Expression<Func<IVehicleOwner, bool>> predicate)
@@ -66,10 +66,10 @@ public class VehicleOwnerRepository : GenericRepository<IVehicleOwner, Entities.
                 .AsNoTracking()
                 .AnyAsync(e => e.LastName.ToLower() == lastName.ToLower());
         }
-        
-        var entities = await _dbSet.ToListAsync();
-        var models = entities.Select(MapEntityToModel);
-        return models.Any(predicate.Compile());
+
+       return await _dbSet.AsNoTracking()
+            .Select(e => MapEntityToModel(e))
+            .AnyAsync(predicate);
     }
     
     protected override IQueryable<Entities.VehicleOwner> ApplyFiltering(IQueryable<Entities.VehicleOwner> query, QueryOptions options)

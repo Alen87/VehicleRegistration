@@ -35,9 +35,10 @@ public class VehicleMakeRepository : GenericRepository<IVehicleMake, Entities.Ve
             return entity != null ? MapEntityToModel(entity) : default;
         }
         
-        var entities = await _dbSet.ToListAsync();
-        var models = entities.Select(MapEntityToModel);
-        return models.FirstOrDefault(predicate.Compile());
+        
+        return await _dbSet.AsNoTracking()
+            .Select(e => MapEntityToModel(e))
+            .FirstOrDefaultAsync(predicate);
     }
     
     protected override async Task<bool> ExistsModelAsync(Expression<Func<IVehicleMake, bool>> predicate)
@@ -54,9 +55,10 @@ public class VehicleMakeRepository : GenericRepository<IVehicleMake, Entities.Ve
                 .AnyAsync(e => e.Name.ToLower() == name.ToLower());
         }
         
-        var entities = await _dbSet.ToListAsync();
-        var models = entities.Select(MapEntityToModel);
-        return models.Any(predicate.Compile());
+       
+          return await _dbSet.AsNoTracking()
+            .Select(e => MapEntityToModel(e))
+            .AnyAsync(predicate);
     }
 
     protected override IQueryable<Entities.VehicleMake> ApplyFiltering(IQueryable<Entities.VehicleMake> query, QueryOptions options)

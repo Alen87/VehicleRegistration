@@ -19,13 +19,16 @@ namespace Project.Service.Test
 {
     public class VehicleMakeServiceTest
     {
+        private readonly Mock<IUnitOfWork> _mockUnitOfWork;
         private readonly Mock<IVehicleMakeRepository> _mockRepository;
         private readonly VehicleMakeService _service;
 
         public VehicleMakeServiceTest()
         {
             _mockRepository = new Mock<IVehicleMakeRepository>();
-            _service = new VehicleMakeService(_mockRepository.Object);
+            _mockUnitOfWork = new Mock<IUnitOfWork>();
+            _mockUnitOfWork.Setup(u => u.VehicleMakeRepository).Returns(_mockRepository.Object);
+            _service = new VehicleMakeService(_mockUnitOfWork.Object);
         }
 
         [Fact]
@@ -144,6 +147,8 @@ namespace Project.Service.Test
 
             _mockRepository.Setup(repo => repo.AddAsync(make))
                 .ReturnsAsync(Mock.Of<IVehicleMake>(m => m.Id == 4 && m.Name == "Toyota" && m.Abrv == "TOY"));
+                
+            _mockUnitOfWork.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
           
             var result = await _service.AddMake(make);
@@ -154,6 +159,7 @@ namespace Project.Service.Test
             result.Name.Should().Be("Toyota");
             _mockRepository.Verify(repo => repo.ExistsAsync(It.IsAny<Expression<Func<IVehicleMake, bool>>>()), Times.Once);
             _mockRepository.Verify(repo => repo.AddAsync(make), Times.Once);
+            _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
 
         [Fact]
@@ -170,6 +176,7 @@ namespace Project.Service.Test
                 .WithMessage($"Proizvođač vozila s imenom 'BMW' već postoji");
 
             _mockRepository.Verify(repo => repo.AddAsync(It.IsAny<IVehicleMake>()), Times.Never);
+            _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
         }
     }
 }

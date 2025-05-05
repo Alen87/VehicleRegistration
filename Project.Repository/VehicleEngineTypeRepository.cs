@@ -34,11 +34,11 @@ public class VehicleEngineTypeRepository : GenericRepository<IVehicleEngineType,
                 .FirstOrDefaultAsync(e => e.Type.ToLower() == type.ToLower());
             return entity != null ? MapEntityToModel(entity) : default;
         }
-        
-     
-        var entities = await _dbSet.ToListAsync();
-        var models = entities.Select(MapEntityToModel);
-        return models.FirstOrDefault(predicate.Compile());
+
+
+        return await _dbSet.AsNoTracking()
+            .Select(e => MapEntityToModel(e))
+            .FirstOrDefaultAsync(predicate);
     }
     
     protected override async Task<bool> ExistsModelAsync(Expression<Func<IVehicleEngineType, bool>> predicate)
@@ -56,11 +56,11 @@ public class VehicleEngineTypeRepository : GenericRepository<IVehicleEngineType,
                 .AsNoTracking()
                 .AnyAsync(e => e.Type.ToLower() == type.ToLower());
         }
-        
-      
-        var entities = await _dbSet.ToListAsync();
-        var models = entities.Select(MapEntityToModel);
-        return models.Any(predicate.Compile());
+
+
+        return await _dbSet.AsNoTracking()
+            .Select(e => MapEntityToModel(e))
+            .AnyAsync(predicate);
     }
     
     protected override IQueryable<Entities.VehicleEngineType> ApplyFiltering(IQueryable<Entities.VehicleEngineType> query, QueryOptions options)
