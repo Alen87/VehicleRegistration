@@ -13,6 +13,7 @@ public interface IUnitOfWork : IDisposable
     IVehicleModelRepository VehicleModelRepository { get; }
     IVehicleEngineTypeRepository VehicleEngineTypeRepository { get; }
     IVehicleOwnerRepository VehicleOwnerRepository { get; }
+    IVehicleRegistrationRepository VehicleRegistrationRepository { get; }
 
     Task<int> SaveChangesAsync();
 }
