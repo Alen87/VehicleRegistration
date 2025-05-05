@@ -91,7 +91,6 @@ namespace Project.Service
             if (string.IsNullOrWhiteSpace(registration.RegistrationNumber))
                 throw new ArgumentException("Registracijski broj je obavezan", nameof(registration));
 
-           
             bool exists = await RegistrationExistsByNumber(registration.RegistrationNumber);
             if (exists)
                 throw new InvalidOperationException($"Registracija s brojem '{registration.RegistrationNumber}' već postoji");
@@ -100,10 +99,13 @@ namespace Project.Service
             if (model == null)
                 throw new ArgumentException($"Model vozila s ID-om {registration.ModelId} ne postoji", nameof(registration));
 
-           
             var owner = await _unitOfWork.VehicleOwnerRepository.GetByIdAsync(registration.OwnerId);
             if (owner == null)
                 throw new ArgumentException($"Vlasnik s ID-om {registration.OwnerId} ne postoji", nameof(registration));
+            
+            var engineType = await _unitOfWork.VehicleEngineTypeRepository.GetByIdAsync(registration.ModelEngineTypeId);
+            if (engineType == null)
+                throw new ArgumentException($"Tip motora s ID-om {registration.ModelEngineTypeId} ne postoji", nameof(registration));
 
             registration.ModelName = model.Name;
             registration.OwnerName = $"{owner.FirstName} {owner.LastName}";
@@ -124,14 +126,12 @@ namespace Project.Service
             if (string.IsNullOrWhiteSpace(registration.RegistrationNumber))
                 throw new ArgumentException("Registracijski broj je obavezan", nameof(registration));
 
-            
             var existingWithSameNumber = await _unitOfWork.VehicleRegistrationRepository.GetFirstAsync(
                 r => r.RegistrationNumber.ToLower() == registration.RegistrationNumber.ToLower() && r.Id != registration.Id);
                 
             if (existingWithSameNumber != null)
                 throw new InvalidOperationException($"Registracija s brojem '{registration.RegistrationNumber}' već postoji");
 
-            
             var existingRegistration = await _unitOfWork.VehicleRegistrationRepository.GetByIdAsync(registration.Id);
             if (existingRegistration == null)
                 throw new InvalidOperationException($"Registracija vozila s ID-om {registration.Id} ne postoji");
@@ -140,10 +140,13 @@ namespace Project.Service
             if (model == null)
                 throw new ArgumentException($"Model vozila s ID-om {registration.ModelId} ne postoji", nameof(registration));
 
-            
             var owner = await _unitOfWork.VehicleOwnerRepository.GetByIdAsync(registration.OwnerId);
             if (owner == null)
                 throw new ArgumentException($"Vlasnik s ID-om {registration.OwnerId} ne postoji", nameof(registration));
+            
+            var engineType = await _unitOfWork.VehicleEngineTypeRepository.GetByIdAsync(registration.ModelEngineTypeId);
+            if (engineType == null)
+                throw new ArgumentException($"Tip motora s ID-om {registration.ModelEngineTypeId} ne postoji", nameof(registration));
 
             registration.ModelName = model.Name;
             registration.OwnerName = $"{owner.FirstName} {owner.LastName}";
