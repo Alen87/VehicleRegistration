@@ -71,7 +71,7 @@ namespace Project.Service.Test
             {
                 Paging = new PagingOptions { PageNumber = 1, PageSize = 2 },
                 Sorting = new SortOptions { SortBy = "Type", SortAscending = true },
-                Filtering = new FilterOptions { SearchText = "P" }
+                Filtering = new FilteringOptions { SearchText = "P" }
             };
 
             var pagedResult = new PagedResult<IVehicleEngineType>(engineTypesList, 2, 1, 2);

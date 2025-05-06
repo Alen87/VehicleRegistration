@@ -70,7 +70,7 @@ namespace Project.Service.Test
             {
                 Paging = new PagingOptions { PageNumber = 1, PageSize = 2 },
                 Sorting = new SortOptions { SortBy = "Name", SortAscending = true },
-                Filtering = new FilterOptions { SearchText = "A" }
+                Filtering = new FilteringOptions { SearchText = "A" }
             };
 
             var pagedResult = new PagedResult<IVehicleMake>(makesList, 2, 1, 2);

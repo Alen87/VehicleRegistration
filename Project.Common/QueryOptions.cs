@@ -10,12 +10,9 @@ namespace Project.Common;
 /// </summary>
 public class QueryOptions
 {
-
-    public FilterOptions Filtering { get; set; } = new FilterOptions();
-
+    public FilteringOptions Filtering { get; set; } = new FilteringOptions();
 
     public SortOptions Sorting { get; set; } = new SortOptions();
-
 
     public PagingOptions Paging { get; set; } = new PagingOptions();
 }

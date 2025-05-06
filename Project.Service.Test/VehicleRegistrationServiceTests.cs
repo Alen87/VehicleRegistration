@@ -82,7 +82,7 @@ namespace Project.Service.Test
             {
                 Paging = new PagingOptions { PageNumber = 1, PageSize = 2 },
                 Sorting = new SortOptions { SortBy = "RegistrationNumber", SortAscending = true },
-                Filtering = new FilterOptions { SearchText = "ZG" }
+                Filtering = new FilteringOptions { SearchText = "ZG" }
             };
 
             var pagedResult = new PagedResult<IVehicleRegistration>(registrationsList, 2, 1, 2);
